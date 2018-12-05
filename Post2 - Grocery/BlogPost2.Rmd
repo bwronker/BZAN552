@@ -2,9 +2,7 @@
 title: "Analyzing Grocery Store Purchases using Association Rules"
 author: "Blog Post 2: Brandon Wronker"
 date: "November 29, 2018"
-output: 
-  html_document:
-    keep_md: true
+output: rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -144,7 +142,8 @@ It is no surprise that Oil/Shortening & Eggs are purchased together quite often.
 ```{r}
 
 subrules2 <- head(basket_rules2, n = 20, by = "lift")
-plot(subrules2, method = "graph", engine = "htmlwidget")
+plot(subrules2, method = "graph", engine = "interactive")
+#plot(subrules2, method = "graph", engine = "htmlwidget")
 
 ```
 
@@ -166,9 +165,8 @@ Looking at our basket rules in groups of three can shed some light on what peopl
 
 subrules3 <- head(basket_rules3, n = 20, by = "lift")
 
-p <- plot(subrules3, method = "graph", engine = "html")
-htmlwidgets::saveWidget(p, "arules.html", selfcontained = FALSE)
-browseURL("arules.html")
+plot(subrules3, method = "graph", engine = "interactive")
+#plot(subrules3, method = "graph", engine = "htmlwidget")
 
 ```
 
