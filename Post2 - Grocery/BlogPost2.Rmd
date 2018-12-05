@@ -165,7 +165,10 @@ Looking at our basket rules in groups of three can shed some light on what peopl
 ```{r}
 
 subrules3 <- head(basket_rules3, n = 20, by = "lift")
-plot(subrules3, method = "graph", engine = "htmlwidget")
+
+p <- plot(subrules3, method = "graph", engine = "html")
+htmlwidgets::saveWidget(p, "arules.html", selfcontained = FALSE)
+browseURL("arules.html")
 
 ```
 
