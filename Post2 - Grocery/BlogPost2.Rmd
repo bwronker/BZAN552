@@ -1,0 +1,174 @@
+---
+title: "Analyzing Grocery Store Purchases using Association Rules"
+author: "Blog Post 2: Brandon Wronker"
+date: "November 29, 2018"
+output: 
+  html_document:
+    keep_md: true
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+
+# Set Working Directory
+setwd("C:/Users/bwronker/OneDrive/Documents/MSBA UTenn/BZAN 552 Multivariate/Posts")
+
+# Read in our Product & Transactional datasets
+prod <- read.csv("product.csv", header = TRUE, colClasses = c("factor",
+                                                              "factor",
+                                                              "factor",
+                                                              "factor",
+                                                              "factor"))
+
+transactions <- read.csv("retail.csv", header = TRUE, colClasses = c("factor",
+                                                              "factor",
+                                                              "factor",
+                                                              "factor",
+                                                              "integer",
+                                                              "numeric",
+                                                              "numeric",
+                                                              "numeric",
+                                                              "integer"))
+
+```
+
+
+```{r}
+
+## Preprocessing
+
+# Join Tables on Product ID so that we have full product descriptions in our baskets
+transfull <- merge(transactions, prod, by = "PRODUCT_ID")
+
+# Let's narrow down our dataset by selecting the most relevant variables
+transfull <- transfull[, c("household_key", "BASKET_ID", 
+                           "PRODUCT_ID", "MANUFACTURER", 
+                           "DEPARTMENT", "BRAND", "COMMODITY_DESC", 
+                           "SUB_COMMODITY_DESC", 
+                           "QUANTITY", "SALES_VALUE")]
+
+# Let's take a closer look at our quantitative variables
+summary(transfull[,c(9,10)])
+
+#install.packages("outliers")
+library(outliers)
+
+#### Identify outliers and oddities in Quantity
+
+trans_quant <- transfull[,9]
+
+plot(density(trans_quant), col = "red", main = "Item Quantity Distribution", xlab = "Quantity")
+
+grubbs.result <- grubbs.test(trans_quant)
+grubbs.result$p.value
+grubbs.result$alternative
+
+#### Identify outliers and oddities in Sales Value
+
+trans_sales <- transfull[,10]
+
+plot(density(trans_sales), col = "red", main = "Item Sales Distribution", xlab = "Sales Value")
+
+grubbs.result <- grubbs.test(trans_sales)
+grubbs.result$p.value
+grubbs.result$alternative
+```
+
+**After seeing these results,** let's go ahead and remove some of the baskets with unusually high quantities in their baskets and check to see if our plot looks more normal!
+
+```{r}
+#### Remove outliers
+transfull <- transfull[-which(transfull$QUANTITY >= 3),]
+plot(density(transfull$QUANTITY), col =  "springgreen3", main = "Item Quantity Distribution", xlab = "Quantity")
+
+```
+
+**Now that** we've got our complete dataset, let's transform the data into a "transactions" table and look at some trends we find in the data.
+
+```{r}
+
+#install.packages("arules")
+#install.packages("arulesViz")
+library(arules)
+library(arulesViz)
+
+# Format our complete dataset into a "transactions" table
+trans <- as(split(transfull[,"COMMODITY_DESC"], transfull[,"BASKET_ID"]), "transactions")
+
+# Let's look at the frequency with which our products were purchased before we do our Market Basket Analysis
+itemFrequencyPlot(trans, topN = 20, col = "light blue", type = "absolute", horiz = TRUE, xlab = "Item Frequency (counts)", main = "Frequency of Commodity Purchased")
+
+```
+
+**As you can see** from our plot, the most popular product at this store (for this time period) is Soft Drinks! There's also quite a bit of lunch & dinner type foods. Sauces, gravy, beef, lunch meat, and bread are some of the most common foods in this dataset. We also see some snack food and desserts. To me, this points to a majority of the customers at this store being parents shopping for the whole family!
+
+```{r results = "hide"}
+
+# Creating basket rules of length 2 & length 3 with the same parameters for Confidence and Support
+basket_rules2 <- apriori(trans, parameter = list(sup = 0.05, conf = 0.5, target="rules", minlen = 2, maxlen = 2))
+basket_rules3 <- apriori(trans, parameter = list(sup = 0.05, conf = 0.5, target="rules", minlen = 3, maxlen = 3))
+
+```
+
+**FOR REFERENCE:**
+
+**SUPPORT:** The first measure called the **support** is the number of transactions that include items in the {LHS} and {RHS} parts of the rule as a percentage of the total number of transactions. It is a measure of how frequently the collection of items occur together as a percentage of all transactions. 
+Interpreted as: Fraction of transactions that contain both LHS & RHS.
+
+**CONFIDENCE:** The second measure called the **confidence** of the rule is the ratio of the number of transactions that include all items in {RHS} as well as the number of transactions that include all items in {LHS} to the number of transactions that include all items in {LHS}.
+Interpreted as: How often items in RHS appear in transactions that contain LHS only.
+
+**LIFT:** The **Lift** tells us how much better a rule is at predicting the result than just assuming the result in the first place (aka random chance). Greater lift values indicate stronger associations.
+Interpreted as: How much our confidence has increased that RHS will be purchased given that LHS was in the basket.
+
+*_______________________________________________*
+
+***PLAY WITH OUR INTERACTIVE MAPS BELOW!***
+
+***Let's start with "rules of length 2" -- meaning one product on the LHS and one product on the RHS***
+
+```{r}
+
+inspect(sort(basket_rules2, by="lift", decreasing = TRUE)[1:30])
+
+```
+
+**BELOW** you will find a fun interactive tool where you can see which two products are purchased together most often! But before we look at that, let's highlight a few interesting numbers. 
+
+It is no surprise that Oil/Shortening & Eggs are purchased together quite often. This is the basis for many great meals such as breakfasts, fried food, as well as desserts. We also see that Lunchmeat, Breads, and & Cheeses are often ourchased together. And finally, on a less healthy note, we can see from Rule 28 that Frozen Pizzas and Soft Drinks are a pretty dynamic duo!
+
+```{r}
+
+subrules2 <- head(basket_rules2, n = 20, by = "lift")
+plot(subrules2, method = "graph", engine = "htmlwidget")
+
+```
+
+*_____________*
+
+***And Finally we have our "rules of length 3" -- meaning two products on the LHS and one product on the RHS***
+
+```{r}
+
+inspect(sort(basket_rules3, by="lift", decreasing = TRUE)[1:30])
+
+```
+
+**BELOW** you will find a fun interactive tool where you can see which three products are purchased together most often! But before we look at that, let's highlight a few interesting numbers. 
+
+Looking at our basket rules in groups of three can shed some light on what people are using in homemade meals! For example, Beef,Gravy & Vegetables in Rule 9. My favorite from this set of rules, however, is Rule 14 -- Ice Cream, Soft Drinks & Cookies/Cones!
+
+```{r}
+
+subrules3 <- head(basket_rules3, n = 20, by = "lift")
+plot(subrules3, method = "graph", engine = "htmlwidget")
+
+```
+
+**THANK YOU FOR READING!**
+
