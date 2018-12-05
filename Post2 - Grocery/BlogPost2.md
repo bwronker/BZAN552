@@ -221,8 +221,11 @@ It is no surprise that Oil/Shortening & Eggs are purchased together quite often.
 
 ``` r
 subrules2 <- head(basket_rules2, n = 20, by = "lift")
-plot(subrules2, method = "graph", engine = "interactive")
+#plot(subrules2, method = "graph", engine = "interactive")
 #plot(subrules2, method = "graph", engine = "htmlwidget")
+
+# PLEASE NOTE: THE ABOVE 'HTMLWIDGET' PLOT ALLOWS THE USER TO DO SOME FUN, EASY TO USE ANALYSIS OF THE ASSOCIATIONS. UNFORTUNATELY, THIS FUNCTION DOES NOT WORK WHEN KNITTED TO AN .md FILE.
+# So Sorry for this. I was really looking forward to showing off this tool!
 ```
 
 *\_\_\_\_\_\_\_\_\_\_\_\_\_*
@@ -302,8 +305,11 @@ Looking at our basket rules in groups of three can shed some light on what peopl
 ``` r
 subrules3 <- head(basket_rules3, n = 20, by = "lift")
 
-plot(subrules3, method = "graph", engine = "interactive")
+#plot(subrules3, method = "graph", engine = "interactive")
 #plot(subrules3, method = "graph", engine = "htmlwidget")
+
+# PLEASE NOTE: THE ABOVE 'HTMLWIDGET' PLOT ALLOWS THE USER TO DO SOME FUN, EASY TO USE ANALYSIS OF THE ASSOCIATIONS. UNFORTUNATELY, THIS FUNCTION DOES NOT WORK WHEN KNITTED TO AN .md FILE.
+# So Sorry for this. I was really looking forward to showing off this tool!
 ```
 
 **THANK YOU FOR READING!**
